@@ -1,0 +1,21 @@
+(export-to "jsonc")
+(@DEVICE (get-env-var "DEVICE"))
+
+((@device
+    ((if
+        (eq DEVICE "LAPTOP")
+            ("LAPTOP")
+            ("DESKTOP"))))
+(@users
+    ("test" "test2" "test3"))
+(@password "test"))
+
+;; sigil is bound by a @
+;; and is used without a @
+;; sigils take in rune(s) or a script ()
+
+;; Tokens:
+;;  Rune
+;;  Sigil
+;;  Script?
+;; there are some given functions like, export-to, get-env-var
