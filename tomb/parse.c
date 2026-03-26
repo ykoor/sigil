@@ -1,5 +1,6 @@
-#include "types/futhark.h"
-#include "types/rune.h"
+#include "../sigil/types/futhark.h"
+#include "../sigil/types/rune.h"
+#include "../sigil/types/sigil.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -7,33 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-Value list_of(int count, ...) {
-    va_list args;
-    va_start(args, count);
-
-    Value *values = malloc(sizeof(Value) * count);
-    for (int i = 0; i < count; i++)
-        values[i] = va_arg(args, Value);
-    va_end(args);
-
-    Value result = VALUE_NIL;
-    for (int i = count - 1; i >= 0; i--)
-        result = make_pair(values[i], result);
-
-    free(values);
-    return result;
-}
-
-typedef enum {
-    TOKEN_LPAREN,
-    TOKEN_RPAREN,
-    TOKEN_IDENTIFIER,
-    TOKEN_ATOM_DEF,
-    TOKEN_VALUE,
-    TOKEN_COMMENT,
-    TOKEN_EOF
-} TokenType;
 
 typedef enum { ERROR_UNBALANCED_PAREN, ERROR_UNBOUND_SYMBOL } ErrorCode;
 
@@ -53,12 +27,9 @@ void skip_ws(Lexer *l) {
 
 char *collect_text(Lexer *l) {
     int start = l->cursor;
-
     while (!lexer_at_end(l) && lexer_current(l) != '(' &&
-           lexer_current(l) != ')' && !isspace(lexer_current(l))) {
+           lexer_current(l) != ')' && !isspace(lexer_current(l)))
         lexer_advance(l);
-    }
-
     int len = l->cursor - start;
     char *text = malloc(len + 1);
     memcpy(text, l->src + start, len);
@@ -71,7 +42,7 @@ typedef enum {
     ATOM_FALSE,
     ATOM_NIL,
     ATOM_NUMBER,
-    ATOM_SYMBOL,
+    ATOM_SYMBOL
 } AtomType;
 
 static AtomType classify_atom(const char *text) {
@@ -81,29 +52,28 @@ static AtomType classify_atom(const char *text) {
         return ATOM_FALSE;
     if (strcmp(text, "nil") == 0)
         return ATOM_NIL;
-
     char *end;
     strtod(text, &end);
     if (end != text && *end == '\0')
         return ATOM_NUMBER;
-
     return ATOM_SYMBOL;
 }
 
-static Value collect_atom(Lexer *l) {
+Rune parse(Lexer *l);
+
+static Rune collect_atom(Lexer *l) {
     char *text = collect_text(l);
     AtomType type = classify_atom(text);
-    Value result;
-
+    Rune result;
     switch (type) {
     case ATOM_TRUE:
-        result = VALUE_TRUE;
+        result = RUNE_TRUE;
         break;
     case ATOM_FALSE:
-        result = VALUE_FALSE;
+        result = RUNE_FALSE;
         break;
     case ATOM_NIL:
-        result = VALUE_NIL;
+        result = RUNE_NIL;
         break;
     case ATOM_NUMBER:
         result = encode_double(strtod(text, NULL));
@@ -112,35 +82,30 @@ static Value collect_atom(Lexer *l) {
         result = make_symbol(text);
         break;
     }
-
     free(text);
     return result;
 }
 
-Value parse(Lexer *l);
-
-Value collect_symbol(Lexer *l) {
+static Rune collect_sigil(Lexer *l) {
     char *s = collect_text(l);
-    Value name = make_symbol(s);
+    Rune symbol = make_symbol(s);
     free(s);
-    Value val = parse(l);
-    return make_atom_def(name, val);
+    Rune val = parse(l);
+    return make_sigil(symbol, val);
 }
 
-Value collect_list(Lexer *l) {
+static Rune collect_list(Lexer *l) {
     skip_ws(l);
-
     if (lexer_current(l) == ')') {
         lexer_advance(l);
-        return VALUE_NIL;
+        return RUNE_NIL;
     }
-
-    Value val = parse(l);
-    Value tail = collect_list(l);
-    return make_pair(val, tail);
+    Rune val = parse(l);
+    Rune tail = collect_list(l);
+    return make_futhark(val, tail);
 }
 
-Value parse(Lexer *l) {
+Rune parse(Lexer *l) {
     skip_ws(l);
     char c = lexer_current(l);
 
@@ -150,7 +115,7 @@ Value parse(Lexer *l) {
     }
     if (c == '@') {
         lexer_advance(l);
-        return collect_symbol(l);
+        return collect_sigil(l);
     }
     if (c == '"') {
         lexer_advance(l);
@@ -162,7 +127,7 @@ Value parse(Lexer *l) {
         memcpy(text, l->src + start, len);
         text[len] = '\0';
         lexer_advance(l);
-        Value result = make_string(text);
+        Rune result = make_string(text);
         free(text);
         return result;
     }
@@ -175,48 +140,39 @@ Value parse(Lexer *l) {
     return collect_atom(l);
 }
 
-void print_tree(Value val, int depth) {
+void print_tree(Rune val, int depth) {
     for (int i = 0; i < depth; i++)
         printf("  ");
 
-    if (is_atom_def(val)) {
-        AtomDef *def = as_atom_def(val);
-        printf("[atom_def] @%s\n", as_symbol(def->name));
-        print_tree(def->val, depth + 1);
+    if (is_sigil(val)) {
+        Sigil *s = as_sigil(val);
+        if (is_nil(s->symbol))
+            printf("[sigil] <anon>\n");
+        else
+            printf("[sigil] @%s\n", as_symbol(s->symbol));
+        print_tree(s->val, depth + 1);
+    } else if (is_futhark(val)) {
+        printf("[futhark]\n");
+        Rune cur = val;
+        while (is_futhark(cur)) {
+            Sigil *f = futhark_first(cur);
+            print_tree(make_sigil(f->symbol, f->val), depth + 1);
+            Sigil *r = futhark_rest(cur);
+            cur = is_nil(r->val) ? RUNE_NIL : make_sigil(r->symbol, r->val);
+        }
     } else if (is_symbol(val)) {
         printf("[symbol] %s\n", as_symbol(val));
     } else if (is_string(val)) {
         printf("[string] \"%s\"\n", as_string(val));
     } else if (is_double(val)) {
         printf("[double] %g\n", decode_double(val));
-    } else if (val == VALUE_TRUE) {
+    } else if (val == RUNE_TRUE) {
         printf("[bool] true\n");
-    } else if (val == VALUE_FALSE) {
+    } else if (val == RUNE_FALSE) {
         printf("[bool] false\n");
-    } else if (val == VALUE_NIL) {
+    } else if (val == RUNE_NIL) {
         printf("[nil]\n");
-    } else if (is_pair(val)) {
-        printf("[pair]\n");
-        Value cur = val;
-        while (!is_nil(cur)) {
-            print_tree(first(cur), depth + 1);
-            cur = rest(cur);
-        }
     }
-}
-
-static bool is_obj_entry(Value v) {
-    if (is_atom_def(v))
-        return true;
-    if (is_pair(v) && is_atom_def(first(v)) && is_nil(rest(v)))
-        return true;
-    return false;
-}
-
-static Value unwrap_entry(Value v) {
-    if (is_atom_def(v))
-        return v;
-    return first(v);
 }
 
 int main() {
@@ -231,8 +187,8 @@ int main() {
         skip_ws(&l);
         if (lexer_at_end(&l))
             break;
-        Value result = parse(&l);
-        to_json(result, 0);
+        Rune result = parse(&l);
+        print_tree(result, 0);
         printf("\n");
     }
 

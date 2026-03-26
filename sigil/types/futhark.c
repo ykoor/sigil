@@ -1,16 +1,24 @@
 #include "futhark.h"
-#include <stdlib.h>
+
+static Sigil *to_sigil(Rune val) {
+    if (is_sigil(val))
+        return as_sigil(val);
+    return as_sigil(make_sigil(RUNE_NIL, val));
+}
 
 Rune make_futhark(Rune first, Rune rest) {
     Futhark *futhark = malloc(sizeof(Futhark));
-    Futhark->first = first;
-    Futhark->rest = rest;
-    return encode_pointer(POINTER_PAIR, futhark);
+    futhark->first = to_sigil(first);
+    futhark->rest = to_sigil(rest);
+    return encode_pointer(POINTER_FUTHARK, futhark);
 }
 
 Futhark *as_futhark(Rune val) { return (Futhark *)decode_pointer(val); }
-Rune futhark_first(Rune val) { return as_futhark(val)->first; }
-Rune futhark_rest(Rune val) { return as_futhark(val)->rest; }
+
+Sigil *futhark_first(Rune val) { return as_futhark(val)->first; }
+
+Sigil *futhark_rest(Rune val) { return as_futhark(val)->rest; }
+
 bool is_futhark(Rune val) {
-    return is_pointer(val) && (val & TYPE_BITS) == POINTER_PAIR;
+    return is_pointer(val) && (val & TYPE_BITS) == POINTER_FUTHARK;
 }

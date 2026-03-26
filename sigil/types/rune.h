@@ -20,6 +20,7 @@ typedef uint64_t Rune;
 #define POINTER_PAIR (UINT64_C(0x2) << 48)
 #define POINTER_SYMBOL (UINT64_C(0x3) << 48)
 #define POINTER_SIGIL (UINT64_C(0x4) << 48)
+#define POINTER_FUTHARK (UINT64_C(0x5) << 48)
 
 #define RUNE_NAN (QNAN | (UINT64_C(0x0) << 48))
 #define RUNE_FALSE (QNAN | (UINT64_C(0x1) << 48))

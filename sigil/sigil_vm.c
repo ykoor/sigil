@@ -1,6 +1,6 @@
-#define STACK_SIZE 1024
 #include "types/rune.h"
 #include "types/sigil.h"
+#define STACK_SIZE 1024
 
 typedef struct Stack {
     Sigil **sigils;
@@ -18,3 +18,12 @@ typedef enum Instruction {
     INST_ADD,
     INST_SUB
 } Instruction;
+
+Stack new_stack() {
+    return (Stack){
+        .sigils = malloc(sizeof(Sigil *) * STACK_SIZE),
+        .ip = 0,
+        .sigil_capacity = STACK_SIZE,
+        .sigil_count = 0,
+    };
+}
