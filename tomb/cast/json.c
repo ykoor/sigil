@@ -6,12 +6,12 @@ void to_json(Value val, int depth) {
 
     if (is_atom_def(val)) {
         AtomDef *def = as_atom_def(val);
-        printf("\"%s\": ", as_symbol(def->name));
+        printf("\"%s\": ", as_rune(def->name));
         to_json(def->val, depth + 1);
     } else if (is_string(val)) {
         printf("\"%s\"", as_string(val));
-    } else if (is_symbol(val)) {
-        printf("\"%s\"", as_symbol(val));
+    } else if (is_rune(val)) {
+        printf("\"%s\"", as_rune(val));
     } else if (is_double(val)) {
         printf("%g", decode_double(val));
     } else if (val == VALUE_TRUE) {

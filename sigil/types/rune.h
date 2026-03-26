@@ -42,8 +42,8 @@ Rune make_string(const char *text);
 char *as_string(Rune val);
 bool is_string(Rune val);
 
-Rune make_symbol(const char *text);
-char *as_symbol(Rune val);
-bool is_symbol(Rune val);
+Rune make_rune(const char *text);
+char *as_rune(Rune val);
+bool is_rune(Rune val);
 
 #endif

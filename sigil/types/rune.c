@@ -51,16 +51,16 @@ bool is_string(Rune val) {
     return is_pointer(val) && (val & TYPE_BITS) == POINTER_STRING;
 }
 
-Rune make_symbol(const char *text) {
+Rune make_rune(const char *text) {
     char *copy = malloc(strlen(text) + 1);
     strcpy(copy, text);
     return encode_pointer(POINTER_SYMBOL, copy);
 }
 
-char *as_symbol(Rune val) {
+char *as_rune(Rune val) {
     return (char *)decode_pointer(val);
 }
 
-bool is_symbol(Rune val) {
+bool is_rune(Rune val) {
     return is_pointer(val) && (val & TYPE_BITS) == POINTER_SYMBOL;
 }

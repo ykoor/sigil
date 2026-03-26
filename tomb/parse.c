@@ -37,49 +37,53 @@ char *collect_text(Lexer *l) {
     return text;
 }
 
+// TODO need to update names
 typedef enum {
-    ATOM_TRUE,
-    ATOM_FALSE,
-    ATOM_NIL,
-    ATOM_NUMBER,
-    ATOM_SYMBOL
-} AtomType;
+    RUNE_KIND_TRUE,
+    RUNE_KIND_FALSE,
+    RUNE_KIND_NIL,
+    RUNE_KIND_NUMBER,
+    RUNE_KIND_RUNE
+} RuneKind;
 
-static AtomType classify_atom(const char *text) {
+static RuneKind classify_rune(const char *text) {
     if (strcmp(text, "true") == 0)
-        return ATOM_TRUE;
+        return RUNE_KIND_TRUE;
+
     if (strcmp(text, "false") == 0)
-        return ATOM_FALSE;
+        return RUNE_KIND_FALSE;
+
     if (strcmp(text, "nil") == 0)
-        return ATOM_NIL;
+        return RUNE_KIND_NIL;
+
     char *end;
     strtod(text, &end);
     if (end != text && *end == '\0')
-        return ATOM_NUMBER;
-    return ATOM_SYMBOL;
+        return RUNE_KIND_NUMBER;
+    return RUNE_KIND_RUNE;
 }
 
 Rune parse(Lexer *l);
 
-static Rune collect_atom(Lexer *l) {
+static Rune collect_rune(Lexer *l) {
     char *text = collect_text(l);
-    AtomType type = classify_atom(text);
+    RuneKind kind = classify_rune(text);
     Rune result;
-    switch (type) {
-    case ATOM_TRUE:
+    switch (kind) {
+    case RUNE_KIND_TRUE:
         result = RUNE_TRUE;
         break;
-    case ATOM_FALSE:
+    case RUNE_KIND_FALSE:
         result = RUNE_FALSE;
         break;
-    case ATOM_NIL:
+    case RUNE_KIND_NIL:
         result = RUNE_NIL;
         break;
-    case ATOM_NUMBER:
+    case RUNE_KIND_NUMBER:
         result = encode_double(strtod(text, NULL));
         break;
-    case ATOM_SYMBOL:
-        result = make_symbol(text);
+    case RUNE_KIND_RUNE:
+        result = make_rune(text);
         break;
     }
     free(text);
@@ -88,7 +92,7 @@ static Rune collect_atom(Lexer *l) {
 
 static Rune collect_sigil(Lexer *l) {
     char *s = collect_text(l);
-    Rune symbol = make_symbol(s);
+    Rune symbol = make_rune(s);
     free(s);
     Rune val = parse(l);
     return make_sigil(symbol, val);
@@ -137,7 +141,7 @@ Rune parse(Lexer *l) {
         return parse(l);
     }
 
-    return collect_atom(l);
+    return collect_rune(l);
 }
 
 void print_tree(Rune val, int depth) {
@@ -149,7 +153,7 @@ void print_tree(Rune val, int depth) {
         if (is_nil(s->symbol))
             printf("[sigil] <anon>\n");
         else
-            printf("[sigil] @%s\n", as_symbol(s->symbol));
+            printf("[sigil] @%s\n", as_rune(s->symbol));
         print_tree(s->val, depth + 1);
     } else if (is_futhark(val)) {
         printf("[futhark]\n");
@@ -158,10 +162,10 @@ void print_tree(Rune val, int depth) {
             Sigil *f = futhark_first(cur);
             print_tree(make_sigil(f->symbol, f->val), depth + 1);
             Sigil *r = futhark_rest(cur);
-            cur = is_nil(r->val) ? RUNE_NIL : make_sigil(r->symbol, r->val);
+            cur = r->val;
         }
-    } else if (is_symbol(val)) {
-        printf("[symbol] %s\n", as_symbol(val));
+    } else if (is_rune(val)) {
+        printf("[rune] %s\n", as_rune(val));
     } else if (is_string(val)) {
         printf("[string] \"%s\"\n", as_string(val));
     } else if (is_double(val)) {
@@ -179,7 +183,7 @@ int main() {
     char src[256];
     snprintf(src, sizeof(src),
              "(@foo (1.2 2 3 (@helloooo (\"%s\" \"%s\" \"%s\"))) (@test 1)) "
-             "(@cool (1 2 3 4 5))",
+             "(@cool (1 2 3 4 5)) ;;test",
              "world", "world", "world");
     Lexer l = {.src = src, .cursor = 0};
 
