@@ -1,5 +1,7 @@
-#pragma once
+#ifndef RUNE_H
+#define RUNE_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -13,15 +15,16 @@ typedef uint64_t Rune;
 #define PAYLOAD_BITS UINT64_C(0x0000FFFFFFFFFFFF)
 
 #define POINTER_NAN (QNAN | SIGN_BIT)
-#define POINTER_STRING (0x1ULL << 48)
-#define POINTER_PAIR (0x2ULL << 48)
-#define POINTER_SIGIL (0x3ULL << 48)
-#define POINTER_SIGIL_DEF (0x4ULL << 48)
 
-#define RUNE_NAN (QNAN | (0x0ULL << 48))
-#define RUNE_FALSE (QNAN | (0x1ULL << 48))
-#define RUNE_TRUE (QNAN | (0x2ULL << 48))
-#define RUNE_NIL (QNAN | (0x3ULL << 48))
+#define POINTER_STRING (UINT64_C(0x1) << 48)
+#define POINTER_PAIR (UINT64_C(0x2) << 48)
+#define POINTER_SYMBOL (UINT64_C(0x3) << 48)
+#define POINTER_SIGIL (UINT64_C(0x4) << 48)
+
+#define RUNE_NAN (QNAN | (UINT64_C(0x0) << 48))
+#define RUNE_FALSE (QNAN | (UINT64_C(0x1) << 48))
+#define RUNE_TRUE (QNAN | (UINT64_C(0x2) << 48))
+#define RUNE_NIL (QNAN | (UINT64_C(0x3) << 48))
 
 bool is_double(Rune val);
 Rune encode_double(double n);
@@ -38,6 +41,8 @@ Rune make_string(const char *text);
 char *as_string(Rune val);
 bool is_string(Rune val);
 
-Rune make_sigil(const char *text);
-char *as_sigil(Rune val);
-bool is_sigil(Rune val);
+Rune make_symbol(const char *text);
+char *as_symbol(Rune val);
+bool is_symbol(Rune val);
+
+#endif

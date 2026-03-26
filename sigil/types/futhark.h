@@ -2,16 +2,16 @@
 #define FUTHARK_H_
 #pragma once
 
-#include "rune.h"
+#include "sigil.h"
 
 typedef struct Futhark {
-    Rune first;
-    Rune rest;
+    Sigil first;
+    Sigil rest;
 } Futhark;
 
-Rune make_pair(Rune first, Rune rest);
+Sigil make_pair(Rune first, Rune rest);
 Futhark *as_Futhark(Rune val);
-Rune pair_first(Rune val);
-Rune pair_rest(Rune val);
+Sigil pair_first(Rune val);
+Sigil pair_rest(Rune val);
 bool is_pair(Rune val);
 #endif // FUTHARK_H_
