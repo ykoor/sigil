@@ -1,55 +1,36 @@
-/jinn
-    debugger
+## Projects
 
-/conjur
-    assember
-
-/unbind
-    dissasember
-    
-/sigil
-    vm
-
-/tomb
-    lisp config system
+| Name | Role |
+|------|------|
+| `/jinn` | Debugger |
+| `/conjur` | Assembler |
+| `/unbind` | Disassembler |
+| `/sigil` | VM |
+| `/tomb` | Lisp config system |
 
 ## Types
 
-Rune:
-    ;; Make, encode, decode types
-    ;; Types:
-    ;;      String
-    ;;      Bool
-    ;;      Double
-    ;;      Nil
-    ;;      NaN
-    ;;      Symbol
-    
-Sigil:
-    ;; Binds two runes together
-    
-Futhark:
-    ;; Binds two sigils together
+### `Rune`
+Make, encode, decode types.
 
-Sigil_VM: 
-    ;; TODO
-    ;; Stack
-    ;; Instructions
-    
-Stack:        
-    ;; TODO
-    ;; Instruction pointer
-    ;; Capacity
+**Types:** `String` `Bool` `Double` `Nil` `NaN` `Symbol`
 
-Instructions: 
-    ;; TODO
-    ;; Operation
-    ;; Operand
-    
+### `Sigil`
+Binds two runes together.
 
-    
-    
-    
-    
-    
-    
+### `Futhark`
+Binds two sigils together.
+
+---
+
+### `Sigil_VM` *(TODO)*
+- Stack
+- Instructions
+
+### `Stack` *(TODO)*
+- Instruction pointer
+- Capacity
+
+### `Instructions` *(TODO)*
+- Operation
+- Operand
