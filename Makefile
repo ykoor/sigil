@@ -5,13 +5,17 @@
 # @version 0.1
 
 CC      = clang
-CFLAGS  = -Wall -Wextra -g -MMD -MP
+CFLAGS  = -Wall -Wextra -g -MMD -MP -DTODO_ERROR
 INCLUDE = -I.
 BUILD   = build
 
-SIGIL_SRCS := $(wildcard sigil/*.c) $(wildcard sigil/types/*.c)
+SIGIL_SRCS := $(wildcard sigil/types/*.c)
 SIGIL_OBJS := $(SIGIL_SRCS:.c=.o)
 SIGIL_DEPS := $(SIGIL_OBJS:.o=.d)
+
+VM_SRCS := $(wildcard sigil/*.c) $(SIGIL_SRCS)
+VM_OBJS := $(VM_SRCS:.c=.o)
+VM_DEPS := $(VM_OBJS:.o=.d)
 
 TOMB_SRCS := tomb/parse.c
 TOMB_OBJS := $(TOMB_SRCS:.c=.o)
@@ -36,8 +40,8 @@ CONJURE_DEPS := $(CONJURE_OBJS:.o=.d)
 $(BUILD)/conjure: $(CONJURE_OBJS) | $(BUILD)
 	$(CC) $(CFLAGS) -o $@ $^
 
-ALL_DEPS := $(SIGIL_DEPS) $(TOMB_DEPS) $(JINN_DEPS) $(CONJURE_DEPS)
-ALL_OBJS := $(SIGIL_OBJS) $(TOMB_OBJS) $(JINN_OBJS) $(CONJURE_OBJS)
+ALL_DEPS := $(SIGIL_DEPS) $(VM_DEPS) $(TOMB_DEPS) $(JINN_DEPS) $(CONJURE_DEPS)
+ALL_OBJS := $(SIGIL_OBJS) $(VM_OBJS) $(TOMB_OBJS) $(JINN_OBJS) $(CONJURE_OBJS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
@@ -47,11 +51,16 @@ ALL_OBJS := $(SIGIL_OBJS) $(TOMB_OBJS) $(JINN_OBJS) $(CONJURE_OBJS)
 $(BUILD):
 	mkdir -p $(BUILD)
 
+$(BUILD)/sigil_vm: $(VM_OBJS) | $(BUILD)
+	$(CC) $(CFLAGS) -o $@ $^
+
+vm: $(BUILD)/sigil_vm
+
 all: $(BUILD)/tomb
 
 clean:
 	rm -f $(ALL_OBJS) $(ALL_DEPS)
 	rm -rf $(BUILD)
 
-.PHONY: all clean
+.PHONY: all vm clean
 # end
