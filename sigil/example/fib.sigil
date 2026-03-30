@@ -1,0 +1,37 @@
+main:
+    push 10     ;; run ten times
+    bind args   ;; TODO bind to args
+
+    push 0
+    bind a
+
+    push 1
+    bind b
+
+loop:
+    summon n
+    push 0      ;; when 0 jump to done
+    cmp_eq      ;; TODO
+    jmpt done
+
+    summon a
+    summon b
+    add
+    bind next
+
+    summon b
+    bind a
+    summon next
+    bind b
+
+    summon n
+    push 1
+    sub
+    bind n
+
+    jmp loop
+
+done:
+    summon b
+    print
+    halt
